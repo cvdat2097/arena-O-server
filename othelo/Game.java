@@ -7,12 +7,18 @@ import java.io.InputStreamReader;
 public class Game {
     public static int[][] gameBoard = new int[8][8];
     public static int currentPlayer = 1;
+    public static boolean pass = false;
+    private static int passCounter = 0;
+    public static int scoreBlack = 0;
+    public static int scoreWhite = 0;
 
     public static void init() {
+        scoreBlack = 1;
+        scoreWhite = 2;
         gameBoard[3][3] = 1;
         gameBoard[3][4] = -1;
-        gameBoard[4][3] = -1;
-        gameBoard[4][4] = 1;
+        // gameBoard[4][3] = -1;
+        // gameBoard[4][4] = 1;
     }
 
     public static void start() throws IOException {
@@ -20,14 +26,24 @@ public class Game {
 
         showBoard();
         while (true) {
-            System.out.println(currentPlayer == 1 ? "O" : "X");
-            System.out.print("Next Row: ");
-            int nextRow = Integer.parseInt(input.readLine());
-            System.out.print("Next Col: ");
-            int nextCol = Integer.parseInt(input.readLine());
+            // Next player
+            System.out.printf("%s - B[%d] - W[%d] - Pass[%d]\n", currentPlayer == 1 ? IO.BLACK_SQUARE : IO.WHITE_SQUARE,
+                    scoreBlack, scoreWhite, passCounter);
 
-            System.err.println(strike(nextRow, nextCol));
-            showBoard();
+            if (scoreBlack * scoreWhite == 0 || passCounter >= 2) {
+                System.out.println("Winner is " + (passCounter >= 2 ? (currentPlayer == 1 ? "Black" : "White")
+                        : (scoreWhite == 0 ? "Black" : "White")));
+                break;
+            } else {
+
+                System.out.print("Next Row: ");
+                int nextRow = Integer.parseInt(input.readLine());
+                System.out.print("Next Col: ");
+                int nextCol = Integer.parseInt(input.readLine());
+
+                System.err.println(strike(nextRow, nextCol));
+                showBoard();
+            }
         }
     }
 
@@ -38,7 +54,9 @@ public class Game {
             System.out.println("Print Sleep interupted");
         }
         IO.clearScreen();
-        
+
+        pass = true;
+
         for (int i = -1; i < 8; i++) {
             for (int j = -1; j < 8; j++) {
                 if (i == -1 && j != -1) {
@@ -48,10 +66,10 @@ public class Game {
                         String charToPrint = "";
                         switch (gameBoard[i][j]) {
                         case 1:
-                            charToPrint = "O";
+                            charToPrint = IO.BLACK_SQUARE;
                             break;
                         case -1:
-                            charToPrint = "X";
+                            charToPrint = IO.WHITE_SQUARE;
                             break;
                         case 3:
                             charToPrint = ".";
@@ -61,6 +79,7 @@ public class Game {
                         System.out.printf("%3s", charToPrint);
                     } else {
                         if (Game.isValid(i, j, false)) {
+                            pass = false;
                             System.out.printf("%3s", ".");
                         } else {
                             System.out.printf("%3s", " ");
@@ -73,6 +92,14 @@ public class Game {
 
             System.out.println();
         }
+
+        // FIXME: Find valid moves first
+        if (pass) {
+            currentPlayer = currentPlayer * -1;
+            passCounter++;
+        } else {
+            passCounter = 0;
+        }
     }
 
     public static void flipChessmen(int prevRow, int prevCol) {
@@ -83,7 +110,9 @@ public class Game {
         if (isValid(row, col, true)) {
             // Strike!
             gameBoard[row][col] = currentPlayer;
+            pass = false;
             currentPlayer *= -1;
+
             return true;
         }
 
@@ -114,6 +143,13 @@ public class Game {
                         if (flip) {
                             for (int r = row + dirRow, c = col + dirCol, l = 1; l < k; r += dirRow, c += dirCol, l++) {
                                 gameBoard[r][c] = currentPlayer;
+                                if (currentPlayer == 1) {
+                                    scoreBlack++;
+                                    scoreWhite--;
+                                } else {
+                                    scoreBlack--;
+                                    scoreWhite++;
+                                }
                             }
                         }
 
