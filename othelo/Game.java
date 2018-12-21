@@ -5,22 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Game {
-    // public static int[][] gameBoard = { { 0, 0, 0, -1, 0, 0, 0, 0 }, { 0, 0, 0,
-    // 0, 1, 0, 0, 0 },
-    // { 0, 0, 0, 0, -1, 0, 0, 0 }, { 0, 0, 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0,
-    // 0, 0 },
-    // { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0,
-    // 0, 0 } };
     public static int[][] gameBoard = new int[8][8];
     public static int currentPlayer = 1;
 
     public static void init() {
+        gameBoard[3][3] = 1;
         gameBoard[3][4] = -1;
-        gameBoard[3][5] = 1;
         gameBoard[4][3] = -1;
         gameBoard[4][4] = 1;
-        gameBoard[5][3] = 1;
-
     }
 
     public static void start() throws IOException {
@@ -28,7 +20,7 @@ public class Game {
 
         showBoard();
         while (true) {
-            System.out.println(currentPlayer);
+            System.out.println(currentPlayer == 1 ? "O" : "X");
             System.out.print("Next Row: ");
             int nextRow = Integer.parseInt(input.readLine());
             System.out.print("Next Col: ");
@@ -46,7 +38,41 @@ public class Game {
             System.out.println("Print Sleep interupted");
         }
         IO.clearScreen();
-        IO.printBoard(gameBoard);
+        
+        for (int i = -1; i < 8; i++) {
+            for (int j = -1; j < 8; j++) {
+                if (i == -1 && j != -1) {
+                    System.out.printf("%3d", j);
+                } else if (j >= 0) {
+                    if (gameBoard[i][j] != 0) {
+                        String charToPrint = "";
+                        switch (gameBoard[i][j]) {
+                        case 1:
+                            charToPrint = "O";
+                            break;
+                        case -1:
+                            charToPrint = "X";
+                            break;
+                        case 3:
+                            charToPrint = ".";
+                            break;
+                        }
+
+                        System.out.printf("%3s", charToPrint);
+                    } else {
+                        if (Game.isValid(i, j, false)) {
+                            System.out.printf("%3s", ".");
+                        } else {
+                            System.out.printf("%3s", " ");
+                        }
+                    }
+                } else {
+                    System.out.printf(i == -1 ? "   " : "%3d", i);
+                }
+            }
+
+            System.out.println();
+        }
     }
 
     public static void flipChessmen(int prevRow, int prevCol) {
@@ -102,13 +128,5 @@ public class Game {
         }
 
         return false;
-    }
-
-    public void suggestMoves() {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                
-            }
-        }
     }
 }
