@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Game {
+    public static final String BLACK_SQUARE = "X";
+    public static final String WHITE_SQUARE = "O";
+    public static final int BOARD_SIZE  = 8;
+
     public int[][] gameBoard;
     public int currentPlayer;
     public int scoreBlack;
@@ -15,8 +19,8 @@ public class Game {
 
     // Constructors
     public Game() {
-        this.gameBoard = new int[IO.BOARD_SIZE][IO.BOARD_SIZE];
-        this.suggestionBoard = new boolean[IO.BOARD_SIZE][IO.BOARD_SIZE];
+        this.gameBoard = new int[BOARD_SIZE][BOARD_SIZE];
+        this.suggestionBoard = new boolean[BOARD_SIZE][BOARD_SIZE];
         this.currentPlayer = 1;
         this.passCounter = 0;
         this.scoreBlack = 0;
@@ -27,6 +31,10 @@ public class Game {
         this.gameBoard[3][4] = -1;
         this.gameBoard[4][3] = -1;
         this.gameBoard[4][4] = 1;
+    }
+
+    static public boolean isInArrayBound(int row, int col) {
+        return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
     }
 
     // Methods
@@ -50,7 +58,7 @@ public class Game {
             if (this.passCounter == 0) {
                 // Print Game info
                 System.out.printf("%s - B[%d] - W[%d] - Pass[%d]\n",
-                        this.currentPlayer == 1 ? IO.BLACK_SQUARE : IO.WHITE_SQUARE, this.scoreBlack, this.scoreWhite,
+                        this.currentPlayer == 1 ? BLACK_SQUARE : WHITE_SQUARE, this.scoreBlack, this.scoreWhite,
                         this.passCounter);
 
                 // Input
@@ -73,10 +81,13 @@ public class Game {
         } catch (InterruptedException e) {
             System.out.println("Print Sleep interupted");
         }
-        IO.clearScreen();
 
-        for (int i = -1; i < IO.BOARD_SIZE; i++) {
-            for (int j = -1; j < IO.BOARD_SIZE; j++) {
+        // Clear console
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+
+        for (int i = -1; i < BOARD_SIZE; i++) {
+            for (int j = -1; j < BOARD_SIZE; j++) {
                 if (i == -1 && j != -1) {
                     System.out.printf("%3d", j);
                 } else if (j >= 0) {
@@ -84,10 +95,10 @@ public class Game {
                         String charToPrint = "";
                         switch (this.gameBoard[i][j]) {
                         case 1:
-                            charToPrint = IO.BLACK_SQUARE;
+                            charToPrint = BLACK_SQUARE;
                             break;
                         case -1:
-                            charToPrint = IO.WHITE_SQUARE;
+                            charToPrint = WHITE_SQUARE;
                             break;
                         case 3:
                             charToPrint = ".";
@@ -112,10 +123,10 @@ public class Game {
 
     public void updateSuggesstionBoard() {
         boolean pass = true;
-        this.suggestionBoard = new boolean[IO.BOARD_SIZE][IO.BOARD_SIZE];
+        this.suggestionBoard = new boolean[BOARD_SIZE][BOARD_SIZE];
 
-        for (int i = 0; i < IO.BOARD_SIZE; i++) {
-            for (int j = 0; j < IO.BOARD_SIZE; j++) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
                 if (isValid(i, j, false)) {
                     this.suggestionBoard[i][j] = true;
                     pass = false;
@@ -153,7 +164,7 @@ public class Game {
 
         for (int dirRow = -1; dirRow <= 1; dirRow++) {
             for (int dirCol = -1; dirCol <= 1; dirCol++) {
-                if (Helper.isInArrayBound(row + dirRow, col + dirCol) && this.gameBoard[row][col] == 0) {
+                if (isInArrayBound(row + dirRow, col + dirCol) && this.gameBoard[row][col] == 0) {
                     // Advance
                     int advRow = row;
                     int advCol = col;
@@ -162,10 +173,10 @@ public class Game {
                         k++;
                         advRow += dirRow;
                         advCol += dirCol;
-                    } while (Helper.isInArrayBound(advRow, advCol)
+                    } while (isInArrayBound(advRow, advCol)
                             && this.gameBoard[advRow][advCol] == this.currentPlayer * -1);
 
-                    if (Helper.isInArrayBound(advRow, advCol) && this.gameBoard[advRow][advCol] == this.currentPlayer
+                    if (isInArrayBound(advRow, advCol) && this.gameBoard[advRow][advCol] == this.currentPlayer
                             && k > 1) {
                         // This is a valid move
                         isValidMove = true;
