@@ -5,49 +5,69 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Game {
-    public static int[][] gameBoard = new int[8][8];
-    public static int currentPlayer = 1;
-    public static boolean pass = false;
-    private static int passCounter = 0;
-    public static int scoreBlack = 0;
-    public static int scoreWhite = 0;
+    public int[][] gameBoard;
+    public int currentPlayer;
+    public int scoreBlack;
+    public int scoreWhite;
+    
+    private int passCounter;
+    private boolean[][] suggestionBoard;
 
-    public static void init() {
-        scoreBlack = 1;
-        scoreWhite = 2;
-        gameBoard[3][3] = 1;
-        gameBoard[3][4] = -1;
-        // gameBoard[4][3] = -1;
-        // gameBoard[4][4] = 1;
+    // Constructors
+    public Game() {
+        this.gameBoard = new int[IO.BOARD_SIZE][IO.BOARD_SIZE];
+        this.suggestionBoard = new boolean[IO.BOARD_SIZE][IO.BOARD_SIZE];
+        this.currentPlayer = 1;
+        this.passCounter = 0;
+        this.scoreBlack = 0;
+        this.scoreWhite = 0;
+        this.scoreBlack = 2;
+        this.scoreWhite = 2;
+        this.gameBoard[3][3] = 1;
+        this.gameBoard[3][4] = -1;
+        this.gameBoard[4][3] = -1;
+        this.gameBoard[4][4] = 1;
     }
 
-    public static void start() throws IOException {
+    // Methods
+    public void start() throws IOException {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
-        showBoard();
         while (true) {
-            // Next player
-            System.out.printf("%s - B[%d] - W[%d] - Pass[%d]\n", currentPlayer == 1 ? IO.BLACK_SQUARE : IO.WHITE_SQUARE,
-                    scoreBlack, scoreWhite, passCounter);
+            // Display board
+            updateSuggesstionBoard();
+            if (this.passCounter <= 1) {
+                showBoard();
+            }
 
-            if (scoreBlack * scoreWhite == 0 || passCounter >= 2) {
-                System.out.println("Winner is " + (passCounter >= 2 ? (currentPlayer == 1 ? "Black" : "White")
-                        : (scoreWhite == 0 ? "Black" : "White")));
+            // Check win condition
+            int winner = checkWinCondition();
+            if (winner != 0) {
+                System.out.println("Winner is " + (winner == 1 ? "Black" : "White"));
                 break;
-            } else {
+            }
 
+            if (this.passCounter == 0) {
+                // Print Game info
+                System.out.printf("%s - B[%d] - W[%d] - Pass[%d]\n",
+                        this.currentPlayer == 1 ? IO.BLACK_SQUARE : IO.WHITE_SQUARE, this.scoreBlack, this.scoreWhite,
+                        this.passCounter);
+
+                // Input
                 System.out.print("Next Row: ");
                 int nextRow = Integer.parseInt(input.readLine());
                 System.out.print("Next Col: ");
                 int nextCol = Integer.parseInt(input.readLine());
 
-                System.err.println(strike(nextRow, nextCol));
-                showBoard();
+                // Strike
+                if (!strike(nextRow, nextCol)) {
+                    System.out.println("Coordination is invalid");
+                }
             }
         }
     }
 
-    public static void showBoard() {
+    public void showBoard() {
         try {
             Thread.sleep(300);
         } catch (InterruptedException e) {
@@ -55,16 +75,14 @@ public class Game {
         }
         IO.clearScreen();
 
-        pass = true;
-
-        for (int i = -1; i < 8; i++) {
-            for (int j = -1; j < 8; j++) {
+        for (int i = -1; i < IO.BOARD_SIZE; i++) {
+            for (int j = -1; j < IO.BOARD_SIZE; j++) {
                 if (i == -1 && j != -1) {
                     System.out.printf("%3d", j);
                 } else if (j >= 0) {
-                    if (gameBoard[i][j] != 0) {
+                    if (this.gameBoard[i][j] != 0) {
                         String charToPrint = "";
-                        switch (gameBoard[i][j]) {
+                        switch (this.gameBoard[i][j]) {
                         case 1:
                             charToPrint = IO.BLACK_SQUARE;
                             break;
@@ -78,8 +96,7 @@ public class Game {
 
                         System.out.printf("%3s", charToPrint);
                     } else {
-                        if (Game.isValid(i, j, false)) {
-                            pass = false;
+                        if (this.suggestionBoard[i][j]) {
                             System.out.printf("%3s", ".");
                         } else {
                             System.out.printf("%3s", " ");
@@ -89,29 +106,41 @@ public class Game {
                     System.out.printf(i == -1 ? "   " : "%3d", i);
                 }
             }
-
             System.out.println();
         }
+    }
 
-        // FIXME: Find valid moves first
+    public void updateSuggesstionBoard() {
+        boolean pass = true;
+        this.suggestionBoard = new boolean[IO.BOARD_SIZE][IO.BOARD_SIZE];
+
+        for (int i = 0; i < IO.BOARD_SIZE; i++) {
+            for (int j = 0; j < IO.BOARD_SIZE; j++) {
+                if (isValid(i, j, false)) {
+                    this.suggestionBoard[i][j] = true;
+                    pass = false;
+                }
+            }
+        }
+
         if (pass) {
-            currentPlayer = currentPlayer * -1;
-            passCounter++;
+            this.currentPlayer = this.currentPlayer * -1;
+            this.passCounter++;
         } else {
-            passCounter = 0;
+            this.passCounter = 0;
         }
     }
 
-    public static void flipChessmen(int prevRow, int prevCol) {
-
-    }
-
-    public static boolean strike(int row, int col) {
+    public boolean strike(int row, int col) {
         if (isValid(row, col, true)) {
             // Strike!
-            gameBoard[row][col] = currentPlayer;
-            pass = false;
-            currentPlayer *= -1;
+            this.gameBoard[row][col] = this.currentPlayer;
+            if (this.currentPlayer == 1) {
+                this.scoreBlack++;
+            } else {
+                this.scoreWhite++;
+            }
+            this.currentPlayer *= -1;
 
             return true;
         }
@@ -119,12 +148,12 @@ public class Game {
         return false;
     }
 
-    public static boolean isValid(int row, int col, boolean flip) {
+    public boolean isValid(int row, int col, boolean flip) {
         boolean isValidMove = false;
 
         for (int dirRow = -1; dirRow <= 1; dirRow++) {
             for (int dirCol = -1; dirCol <= 1; dirCol++) {
-                if (Helper.isInArrayBound(row + dirRow, col + dirCol) && gameBoard[row][col] == 0) {
+                if (Helper.isInArrayBound(row + dirRow, col + dirCol) && this.gameBoard[row][col] == 0) {
                     // Advance
                     int advRow = row;
                     int advCol = col;
@@ -133,22 +162,25 @@ public class Game {
                         k++;
                         advRow += dirRow;
                         advCol += dirCol;
-                    } while (Helper.isInArrayBound(advRow, advCol) && gameBoard[advRow][advCol] == currentPlayer * -1);
+                    } while (Helper.isInArrayBound(advRow, advCol)
+                            && this.gameBoard[advRow][advCol] == this.currentPlayer * -1);
 
-                    if (Helper.isInArrayBound(advRow, advCol) && gameBoard[advRow][advCol] == currentPlayer && k > 1) {
+                    if (Helper.isInArrayBound(advRow, advCol) && this.gameBoard[advRow][advCol] == this.currentPlayer
+                            && k > 1) {
                         // This is a valid move
                         isValidMove = true;
 
                         // Flip squares
                         if (flip) {
+                            // Score from flip
                             for (int r = row + dirRow, c = col + dirCol, l = 1; l < k; r += dirRow, c += dirCol, l++) {
-                                gameBoard[r][c] = currentPlayer;
-                                if (currentPlayer == 1) {
-                                    scoreBlack++;
-                                    scoreWhite--;
+                                this.gameBoard[r][c] = this.currentPlayer;
+                                if (this.currentPlayer == 1) {
+                                    this.scoreBlack++;
+                                    this.scoreWhite--;
                                 } else {
-                                    scoreBlack--;
-                                    scoreWhite++;
+                                    this.scoreBlack--;
+                                    this.scoreWhite++;
                                 }
                             }
                         }
@@ -158,11 +190,22 @@ public class Game {
             }
         }
 
-        if (isValidMove) {
+        return isValidMove;
+    }
 
-            return true;
+    public int checkWinCondition() {
+        if (this.passCounter >= 2) {
+            return this.currentPlayer;
         }
 
-        return false;
+        if (this.scoreBlack == 0) {
+            return -1;
+        }
+
+        if (this.scoreWhite == 0) {
+            return 1;
+        }
+
+        return 0;
     }
 }
